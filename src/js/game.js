@@ -45,6 +45,7 @@ function createGame() {
       kind: g.kind,
       releaseAt: g.releaseAt,
       active: g.releaseAt === 0,
+      phase: 'exiting',
       patrolTarget: 'top-left',
     } ) ),
   };
@@ -190,7 +191,27 @@ function moveGhost( game, g ) {
   if ( aligned( g.x ) && aligned( g.y ) ) {
     g.x = Math.round( g.x );
     g.y = Math.round( g.y );
-    decideGhost( game, g );
+
+    if ( g.phase === 'exiting' ) {
+      if ( g.y === 11 ) {
+        g.phase = 'roaming';
+        return;
+      }
+      g.dir = 'up';
+
+      const nextCell = {
+        x: g.x + DIRS.up.x,
+        y: g.y + DIRS.up.y,
+      };
+      const blockedByGhost = game.ghosts.some( ( other ) =>
+        other !== g && Math.abs( other.x - nextCell.x ) < 0.5 &&
+        Math.abs( other.y - nextCell.y ) < 0.5
+      );
+      if ( blockedByGhost ) return;
+    } else {
+      decideGhost( game, g );
+    }
+
     if ( !canMove( grid, g.x, g.y, g.dir, 'ghost' ) ) return;
   }
 
@@ -212,6 +233,7 @@ function resetPositions( game ) {
     g.y = GHOST_STARTS[ i ].y;
     g.dir = 'up';
     g.active = g.releaseAt === 0;
+    g.phase = 'exiting';
     g.patrolTarget = 'top-left';
   } );
 }
