@@ -120,6 +120,33 @@ function movePacman( game ) {
   wrapTunnel( p, width );
 }
 
+const PATROL_CORNERS = {
+  'top-left': { x: 1, y: 1 },
+  'top-right': { x: 26, y: 1 },
+};
+
+function validTarget( grid, target ) {
+  return target.x >= 0 && target.x < grid[ 0 ].length &&
+    target.y >= 0 && target.y < grid.length &&
+    !isWall( grid, target.x, target.y, 'ghost' );
+}
+
+function chooseDirectionToward( grid, g, choices, target ) {
+  let best = choices[ 0 ];
+  let bestDist = Infinity;
+  for ( const dir of choices ) {
+    const d = DIRS[ dir ];
+    const nx = g.x + d.x;
+    const ny = g.y + d.y;
+    const dist = Math.abs( nx - target.x ) + Math.abs( ny - target.y );
+    if ( dist < bestDist ) {
+      bestDist = dist;
+      best = dir;
+    }
+  }
+  return best;
+}
+
 function decideGhost( game, g ) {
   const grid = game.grid;
   const p = game.pacman;
@@ -130,25 +157,30 @@ function decideGhost( game, g ) {
   // Sin salida (callejon): permitir el giro de 180.
   const choices = options.length ? options : [ '' + OPPOSITE[ g.dir ] ];
 
-  if ( g.kind === 'hunter' ) {
-    const px = Math.round( p.x );
-    const py = Math.round( p.y );
-    let best = choices[ 0 ];
-    let bestDist = Infinity;
-    for ( const dir of choices ) {
-      const d = DIRS[ dir ];
-      const nx = g.x + d.x;
-      const ny = g.y + d.y;
-      const dist = Math.abs( nx - px ) + Math.abs( ny - py );
-      if ( dist < bestDist ) {
-        bestDist = dist;
-        best = dir;
-      }
-    }
-    g.dir = best;
-  } else {
+  if ( g.kind === 'random' ) {
     g.dir = choices[ Math.floor( Math.random() * choices.length ) ];
+    return;
   }
+
+  let target = { x: Math.round( p.x ), y: Math.round( p.y ) };
+  if ( g.kind === 'ambusher' ) {
+    const d = DIRS[ p.dir ];
+    const ahead = {
+      x: target.x + d.x * 4,
+      y: target.y + d.y * 4,
+    };
+    if ( validTarget( grid, ahead ) ) target = ahead;
+  } else if ( g.kind === 'patroller' ) {
+    const corner = PATROL_CORNERS[ g.patrolTarget ];
+    if ( g.x === corner.x && g.y === corner.y ) {
+      g.patrolTarget = g.patrolTarget === 'top-left' ? 'top-right' : 'top-left';
+      target = PATROL_CORNERS[ g.patrolTarget ];
+    } else {
+      target = corner;
+    }
+  }
+
+  g.dir = chooseDirectionToward( grid, g, choices, target );
 }
 
 function moveGhost( game, g ) {
