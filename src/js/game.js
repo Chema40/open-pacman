@@ -198,6 +198,16 @@ function moveGhost( game, g ) {
         return;
       }
       g.dir = 'up';
+
+      const nextCell = {
+        x: g.x + DIRS.up.x,
+        y: g.y + DIRS.up.y,
+      };
+      const blockedByGhost = game.ghosts.some( ( other ) =>
+        other !== g && Math.abs( other.x - nextCell.x ) < 0.5 &&
+        Math.abs( other.y - nextCell.y ) < 0.5
+      );
+      if ( blockedByGhost ) return;
     } else {
       decideGhost( game, g );
     }
