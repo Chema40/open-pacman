@@ -202,6 +202,7 @@ function moveGhost( game, g ) {
 
 function resetPositions( game ) {
   const p = game.pacman;
+  game.elapsedMs = 0;
   p.x = PACMAN_START.x;
   p.y = PACMAN_START.y;
   p.dir = 'left';
@@ -210,6 +211,8 @@ function resetPositions( game ) {
     g.x = GHOST_STARTS[ i ].x;
     g.y = GHOST_STARTS[ i ].y;
     g.dir = 'up';
+    g.active = g.releaseAt === 0;
+    g.patrolTarget = 'top-left';
   } );
 }
 
@@ -217,7 +220,8 @@ function collides( a, b ) {
   return Math.abs( a.x - b.x ) < 0.5 && Math.abs( a.y - b.y ) < 0.5;
 }
 
-function update( game ) {
+function update( game, deltaMs ) {
+  game.elapsedMs += deltaMs;
   releaseGhosts( game );
   movePacman( game );
   game.ghosts.forEach( ( g ) => {
