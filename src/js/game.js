@@ -45,6 +45,7 @@ function createGame() {
       kind: g.kind,
       releaseAt: g.releaseAt,
       active: g.releaseAt === 0,
+      phase: 'exiting',
       patrolTarget: 'top-left',
     } ) ),
   };
@@ -212,6 +213,7 @@ function resetPositions( game ) {
     g.y = GHOST_STARTS[ i ].y;
     g.dir = 'up';
     g.active = g.releaseAt === 0;
+    g.phase = 'exiting';
     g.patrolTarget = 'top-left';
   } );
 }
